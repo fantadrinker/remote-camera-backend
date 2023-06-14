@@ -24,7 +24,7 @@ provider "auth0" {} # grab from environment
 
 resource "auth0_resource_server" "storage_api" {
   name = "remote-cam-storage-api"
-  identifier = aws_apigatewayv2_api.storage_api.api_endpoint
+  identifier = "${aws_apigatewayv2_api.storage_api.api_endpoint}/"
   signing_alg = "RS256"
   allow_offline_access = true
   token_lifetime = 86400
@@ -44,7 +44,7 @@ resource "aws_apigatewayv2_api" "storage_api" {
 
 resource "aws_apigatewayv2_stage" "default_stage" {
   api_id = aws_apigatewayv2_api.storage_api.id
-  name = "storage-api-stage"
+  name = "$default"
   auto_deploy = true
 }
 

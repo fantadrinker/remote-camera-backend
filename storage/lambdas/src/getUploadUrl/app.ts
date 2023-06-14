@@ -21,7 +21,9 @@ export const handler: Handler = event => {
     getCommand, 
     { expiresIn: URL_EXPIRATION_SECONDS }).then(url => {
       return JSON.stringify({
-        url,
+        uploadUrl: url,
+        Key,
       })
-    })
+    }
+  )
 }

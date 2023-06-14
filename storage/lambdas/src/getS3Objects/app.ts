@@ -16,7 +16,8 @@ export const handler: Handler = event => {
 
   return s3Client.send(listCommand).then(data => {
     return JSON.stringify({
-      objects: data.Contents?.map(object => {
+      success: true,
+      data: data.Contents?.map(object => {
         return {
           Key: object.Key,
           LastModified: object.LastModified,
