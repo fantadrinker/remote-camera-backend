@@ -1,14 +1,14 @@
-import AWS from 'aws-sdk'
+import { ApiGatewayManagementApi, PostToConnectionCommand } from '@aws-sdk/client-apigatewaymanagementapi';
 import { DynamoDBClient, GetItemCommand } from '@aws-sdk/client-dynamodb'
 import { APIGatewayProxyWebsocketHandlerV2 } from 'aws-lambda';
 const ddbClient = new DynamoDBClient({ region: process.env.AWS_REGION })
 
-export const sendMessage : APIGatewayProxyWebsocketHandlerV2 = async (event, context) => {
+export const handler: APIGatewayProxyWebsocketHandlerV2 = async (event, context) => {
   console.log("got message", event);
-  const manApi = new AWS.ApiGatewayManagementApi({
-    apiVersion: "2018-11-29",
+  const manApi = new ApiGatewayManagementApi({
+    region: process.env.AWS_REGION,
     endpoint: event.requestContext.domainName + "/" + event.requestContext.stage
-  });
+  })
   
   const connectionId = event.requestContext.connectionId
 
@@ -40,13 +40,18 @@ export const sendMessage : APIGatewayProxyWebsocketHandlerV2 = async (event, con
     if (connType.S !== 'broadcast') {
       throw Error('Connection is not a broadcast connection')
     }
-    await manApi.postToConnection({
-      ConnectionId: connectionId,
+
+    const relayCommand = new PostToConnectionCommand({
+      ConnectionId: item.Item?.broadcastConnectionId.S,
+      // @ts-ignore
       Data: JSON.stringify({
         payload: postData.data,
         message_type: 'viewer_message',
       })
-    }).promise()
+    })
+
+    await manApi.send(relayCommand)
+
     return {
       statusCode: 200,
       body: JSON.stringify({

@@ -8,7 +8,7 @@ const ddbClient = new DynamoDBClient({
   region: process.env.AWS_REGION,
 })
 
-export const disconnectStream: APIGatewayProxyWebsocketHandlerV2 = async (event, context) => {
+export const handler: APIGatewayProxyWebsocketHandlerV2 = async (event, context) => {
 
   const connectionId = event.requestContext.connectionId
 

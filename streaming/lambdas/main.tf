@@ -29,8 +29,8 @@ locals {
   }
 }
 
-resource "aws_iam_role" "lambda_api_route_role" {
-  name = "lambda-api-route-role"
+resource "aws_iam_role" "lambda_ws_api_route_role" {
+  name = "lambda-ws-api-route-role"
   assume_role_policy = jsonencode({
     Version = "2012-10-17"
     Statement = [
@@ -46,14 +46,31 @@ resource "aws_iam_role" "lambda_api_route_role" {
   })
 }
 
-resource "aws_iam_role_policy_attachment" "lambda_api_route_role_attachment" {
-  role       = aws_iam_role.lambda_api_route_role.name
+resource "aws_iam_role_policy" "lambda_ws_api_route_policy" {
+  name = "lambda-ws-api-route-policy"
+  role = aws_iam_role.lambda_ws_api_route_role.name
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Action = [
+          "execute-api:ManageConnections"
+        ]
+        Effect = "Allow"
+        Resource = "${var.api_exe_arn}/*"
+      }
+    ]
+  })
+}
+
+resource "aws_iam_role_policy_attachment" "lambda_ws_api_route_base_role" {
+  role       = aws_iam_role.lambda_ws_api_route_role.name
   policy_arn = "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
 }
 
-resource "aws_iam_role_policy_attachment" "s3_access" {
-  role       = aws_iam_role.lambda_api_route_role.name
-  policy_arn = "arn:aws:iam::aws:policy/DynamoDBFullAccess"
+resource "aws_iam_role_policy_attachment" "lambda_dynamodb_policy" {
+  role = aws_iam_role.lambda_ws_api_route_role.name
+  policy_arn = "arn:aws:iam::aws:policy/AmazonDynamoDBFullAccess"
 }
 
 data "archive_file" "lambda_zip" {
@@ -68,11 +85,16 @@ resource "aws_lambda_function" "lambda" {
   for_each = local.route_key_fun_map
 
   function_name = "${each.value}-lambda"
-  role = aws_iam_role.lambda_api_route_role.arn
+  role = aws_iam_role.lambda_ws_api_route_role.arn
   handler = "app.handler"
   runtime = "nodejs18.x"
   filename = data.archive_file.lambda_zip[each.key].output_path
   source_code_hash = data.archive_file.lambda_zip[each.key].output_base64sha256
+  environment {
+    variables = {
+      STREAM_TABLE = var.stream_table_name
+    }
+  }
 }
 
 resource "aws_apigatewayv2_deployment" "deployment" {
@@ -101,7 +123,16 @@ resource "aws_apigatewayv2_integration" "ws_integrations" {
   integration_type = "AWS_PROXY"
   integration_method = "POST"
   integration_uri = aws_lambda_function.lambda[each.key].invoke_arn
-  payload_format_version = "2.0"
+  payload_format_version = "1.0"
 }
 
+resource "aws_lambda_permission" "apigw" {
+  for_each = local.route_key_fun_map
+
+  statement_id  = "AllowExecutionFromAPIGateway"
+  action        = "lambda:InvokeFunction"
+  function_name = aws_lambda_function.lambda[each.key].function_name
+  principal     = "apigateway.amazonaws.com"
+  source_arn    = "${var.api_exe_arn}/*/*"
+}
 

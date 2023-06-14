@@ -1,14 +1,14 @@
-import AWS from 'aws-sdk'
+import { ApiGatewayManagementApiClient, PostToConnectionCommand } from '@aws-sdk/client-apigatewaymanagementapi';
 import { DynamoDBClient, GetItemCommand, UpdateItemCommand} from "@aws-sdk/client-dynamodb"
 import { APIGatewayProxyWebsocketHandlerV2 } from 'aws-lambda';
 const ddbClient = new DynamoDBClient({ region: process.env.AWS_REGION });
 
 
-export const initViewer : APIGatewayProxyWebsocketHandlerV2 = async (event, context) => {
-  const manApi = new AWS.ApiGatewayManagementApi({
-    apiVersion: "2018-11-29",
+export const handler: APIGatewayProxyWebsocketHandlerV2 = async (event, context) => {
+  const manApi = new ApiGatewayManagementApiClient({
+    region: process.env.AWS_REGION,
     endpoint: event.requestContext.domainName + "/" + event.requestContext.stage
-  });
+  })
 
   const connectionId  = event.requestContext.connectionId
   if (!connectionId || !event.body) {
@@ -62,15 +62,19 @@ export const initViewer : APIGatewayProxyWebsocketHandlerV2 = async (event, cont
       UpdateExpression: "SET #C = :c, #B = :b"
     })
     await ddbClient.send(updateCommand)
-    await manApi.postToConnection({
-      ConnectionId: connectionId,
-      Data: JSON.stringify({
 
+    const responseCommand = new PostToConnectionCommand({
+      ConnectionId: connectionId,
+      // @ts-ignore
+      Data: JSON.stringify({
         success: true,
         message_type: 'session_created',
-        payload: connectionId,
+        payload: connectionId
       })
-    }).promise()
+    })
+
+    await manApi.send(responseCommand)
+
     return {
       statusCode: 200,
       body: 'Viewer initialized.'
