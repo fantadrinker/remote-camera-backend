@@ -101,10 +101,7 @@ resource "aws_apigatewayv2_deployment" "deployment" {
   api_id = var.api_id
   description = "Deployment"
   triggers = {
-    redeployment = sha1(jsonencode({
-      route_key_fun_map = local.route_key_fun_map,
-      lambda_zip = data.archive_file.lambda_zip,
-    }))
+    redeployment = sha1(jsonencode(local.route_key_fun_map))
   }
 }
 

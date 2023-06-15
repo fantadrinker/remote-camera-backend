@@ -1,13 +1,13 @@
-import { ApiGatewayManagementApi, PostToConnectionCommand } from '@aws-sdk/client-apigatewaymanagementapi';
+import { ApiGatewayManagementApiClient, PostToConnectionCommand } from '@aws-sdk/client-apigatewaymanagementapi';
 import { DynamoDBClient, GetItemCommand } from '@aws-sdk/client-dynamodb'
 import { APIGatewayProxyWebsocketHandlerV2 } from 'aws-lambda';
 const ddbClient = new DynamoDBClient({ region: process.env.AWS_REGION })
 
 export const handler: APIGatewayProxyWebsocketHandlerV2 = async (event, context) => {
   console.log("got message", event);
-  const manApi = new ApiGatewayManagementApi({
+  const manApi = new ApiGatewayManagementApiClient({
     region: process.env.AWS_REGION,
-    endpoint: event.requestContext.domainName + "/" + event.requestContext.stage
+    endpoint: `https://${event.requestContext.domainName}/${event.requestContext.stage}`
   })
   
   const connectionId = event.requestContext.connectionId
@@ -37,8 +37,8 @@ export const handler: APIGatewayProxyWebsocketHandlerV2 = async (event, context)
       throw Error('No connection found')
     }
     const connType = item.Item.connectionType
-    if (connType.S !== 'broadcast') {
-      throw Error('Connection is not a broadcast connection')
+    if (connType.S !== 'viewer') {
+      throw Error('Connection is not a viewer')
     }
 
     const relayCommand = new PostToConnectionCommand({

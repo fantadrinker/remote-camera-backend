@@ -1,11 +1,11 @@
-import { ApiGatewayManagementApi, PostToConnectionCommand } from "@aws-sdk/client-apigatewaymanagementapi";
+import { ApiGatewayManagementApiClient, PostToConnectionCommand } from "@aws-sdk/client-apigatewaymanagementapi";
 import { DynamoDBClient, GetItemCommand } from "@aws-sdk/client-dynamodb";
 import { APIGatewayProxyWebsocketHandlerV2 } from "aws-lambda";
 const ddbClient = new DynamoDBClient({ region: process.env.AWS_REGION });
 
 export const handler: APIGatewayProxyWebsocketHandlerV2 = async (event, context) => {
-  const manApi = new ApiGatewayManagementApi({
-    endpoint: event.requestContext.domainName + "/" + event.requestContext.stage,
+  const manApi = new ApiGatewayManagementApiClient({
+    endpoint: `https://${event.requestContext.domainName}/${event.requestContext.stage}`,
     region: process.env.AWS_REGION,
   });
   

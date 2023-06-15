@@ -7,7 +7,7 @@ const ddbClient = new DynamoDBClient({ region: process.env.AWS_REGION });
 export const handler: APIGatewayProxyWebsocketHandlerV2 = async (event, context) => {
   const manApi = new ApiGatewayManagementApiClient({
     region: process.env.AWS_REGION,
-    endpoint: event.requestContext.domainName + "/" + event.requestContext.stage
+    endpoint: `https://${event.requestContext.domainName}/${event.requestContext.stage}`
   })
 
   const connectionId  = event.requestContext.connectionId
