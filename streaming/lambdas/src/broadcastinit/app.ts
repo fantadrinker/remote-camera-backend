@@ -1,14 +1,15 @@
-import AWS from "aws-sdk";
+import { ApiGatewayManagementApiClient, PostToConnectionCommand } from "@aws-sdk/client-apigatewaymanagementapi";
 import { APIGatewayProxyWebsocketHandlerV2 } from "aws-lambda";
 import { DynamoDBClient, PutItemCommand, UpdateItemCommand} from "@aws-sdk/client-dynamodb"
 
+
 const ddbClient = new DynamoDBClient({ region: process.env.AWS_REGION });
 
-export const initBroadcast: APIGatewayProxyWebsocketHandlerV2 = async (event, context) => {
-  const manApi = new AWS.ApiGatewayManagementApi({
-    apiVersion: "2018-11-29",
-    endpoint: event.requestContext.domainName + "/" + event.requestContext.stage
-  });
+export const handler: APIGatewayProxyWebsocketHandlerV2 = async (event, context) => {
+  const manApi = new ApiGatewayManagementApiClient({
+    region: process.env.AWS_REGION,
+    endpoint: `https://${event.requestContext.domainName}/${event.requestContext.stage}`
+  })
 
   const connId = event.requestContext.connectionId;
   if (!connId || !event.body) {
@@ -60,12 +61,16 @@ export const initBroadcast: APIGatewayProxyWebsocketHandlerV2 = async (event, co
   try {
     await ddbClient.send(createBrCommand);
     await ddbClient.send(updateConnCommand);
-    await manApi.postToConnection({
+
+    const responseCommand = new PostToConnectionCommand({
       ConnectionId: connId,
+      // @ts-ignore how to convert string to uint8array?
       Data: JSON.stringify({
         success: true
       })
-    }).promise()
+    })
+
+    await manApi.send(responseCommand)
     return {
       statusCode: 200,
       body: JSON.stringify({

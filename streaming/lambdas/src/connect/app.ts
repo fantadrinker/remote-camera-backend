@@ -8,7 +8,7 @@ import { APIGatewayProxyWebsocketHandlerV2 } from "aws-lambda";
 
 const ddbClient = new DynamoDBClient({ region: process.env.AWS_REGION })
 
-export const connectStream : APIGatewayProxyWebsocketHandlerV2 = (event, context) => {
+export const handler: APIGatewayProxyWebsocketHandlerV2 = (event, context) => {
   console.log('event', event);
   
 
