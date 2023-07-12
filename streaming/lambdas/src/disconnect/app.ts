@@ -23,7 +23,7 @@ export const handler: APIGatewayProxyWebsocketHandlerV2 = async (event, context)
   try {
     await ddbClient.send(command)
   } catch (error) {
-    console.log("error cleaning up", error)
+    console.log("error cleaning up", event, error)
   }
   return { statusCode: 200, body: "Disconnected." }
 } 
