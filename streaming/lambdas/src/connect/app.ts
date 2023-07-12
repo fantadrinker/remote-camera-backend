@@ -9,16 +9,13 @@ import { APIGatewayProxyWebsocketHandlerV2 } from "aws-lambda";
 const ddbClient = new DynamoDBClient({ region: process.env.AWS_REGION })
 
 export const handler: APIGatewayProxyWebsocketHandlerV2 = (event, context) => {
-  console.log('event', event);
-  
-
   const connectionId = event.requestContext.connectionId
 
   const command = new PutItemCommand({
     TableName: process.env.STREAM_TABLE,
     Item: {
-      pk: 
-      { 
+      pk:
+      {
         S: `connection#${connectionId}`
       },
       connectionId: {
@@ -30,7 +27,7 @@ export const handler: APIGatewayProxyWebsocketHandlerV2 = (event, context) => {
   return ddbClient.send(command).then(() => {
     return { statusCode: 200, body: 'Connected' }
   }).catch((error) => {
-    console.log("connection failed.", error)
+    console.log("connection failed.", event, error)
     return { statusCode: 500, body: 'Failed to connect' }
   })
 };
