@@ -17,14 +17,16 @@ describe('disconnect handler', () => {
       }
     };
 
-    ddbMock.on(ddbClient.DeleteItemCommand, {
-      TableName: 'STREAM_TABLE',
-      Key: {
-        pk: {
-          S: `connection#12345`
+    ddbMock
+      .on(ddbClient.DeleteItemCommand, {
+        TableName: 'STREAM_TABLE',
+        Key: {
+          pk: {
+            S: `connection#12345`
+          }
         }
-      }
-    }).resolves({});
+      })
+      .resolves({});
     const result = await disconnect.handler(event);
     expect(result.statusCode).toEqual(200);
   });
@@ -36,7 +38,9 @@ describe('disconnect handler', () => {
       }
     };
 
-    ddbMock.on(ddbClient.DeleteItemCommand).rejects({});
+    ddbMock
+      .on(ddbClient.DeleteItemCommand)
+      .rejects({});
     const result = await disconnect.handler(event);
     expect(result.statusCode).toEqual(200);
   });

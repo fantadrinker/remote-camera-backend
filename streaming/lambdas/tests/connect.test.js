@@ -1,5 +1,6 @@
 
 const connect = require('../src/connect/app');
+
 const awsSdk = require('aws-sdk-client-mock');
 const ddbClient = require('@aws-sdk/client-dynamodb');
 
@@ -17,8 +18,7 @@ describe('connect handler', () => {
         connectionId: '12345',
       }
     };
-
-    ddbMock.on(ddbClient.PutItemCommand, {
+    const putConnection = {
       TableName: 'STREAM_TABLE',
       Item: {
         pk:
@@ -29,7 +29,12 @@ describe('connect handler', () => {
           S: '12345',
         },
       }
-    }).resolves({});
+    }
+    ddbMock
+      .on(ddbClient.PutItemCommand)
+      .rejects({})
+      .on(ddbClient.PutItemCommand, putConnection)
+      .resolves({});
     const result = await connect.handler(event);
     expect(result.statusCode).toEqual(200);
   });
