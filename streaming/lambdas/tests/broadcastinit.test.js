@@ -65,6 +65,7 @@ describe('broadcastinit handler', () => {
       ConnectionId: '12345',
       Data: JSON.stringify({
         success: true,
+        broadcastId: '12345',
       })
     }
 

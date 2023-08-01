@@ -1,6 +1,6 @@
 import { ApiGatewayManagementApiClient, PostToConnectionCommand } from "@aws-sdk/client-apigatewaymanagementapi";
 import { APIGatewayProxyWebsocketHandlerV2 } from "aws-lambda";
-import { DynamoDBClient, PutItemCommand, UpdateItemCommand} from "@aws-sdk/client-dynamodb"
+import { DynamoDBClient, PutItemCommand, UpdateItemCommand } from "@aws-sdk/client-dynamodb"
 
 
 const ddbClient = new DynamoDBClient({ region: process.env.AWS_REGION });
@@ -66,7 +66,8 @@ export const handler: APIGatewayProxyWebsocketHandlerV2 = async (event, context)
       ConnectionId: connId,
       // @ts-ignore how to convert string to uint8array?
       Data: JSON.stringify({
-        success: true
+        success: true,
+        broadcastId: connId,
       })
     })
 
@@ -82,7 +83,7 @@ export const handler: APIGatewayProxyWebsocketHandlerV2 = async (event, context)
     return {
       statusCode: 500,
       body: JSON.stringify({
-        message:  "Failed to initialize broadcast connection"
+        message: "Failed to initialize broadcast connection"
       })
     }
   }
